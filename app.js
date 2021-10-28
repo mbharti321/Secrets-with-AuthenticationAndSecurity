@@ -4,6 +4,7 @@ const express = require("express");
 const bodyParser = require("body-parser");
 const ejs = require("ejs");
 const mongoose = require("mongoose");
+const encrypt = require("mongoose-encryption");
 
 
 
@@ -15,12 +16,16 @@ app.set("view engine", "ejs")
 const dbConnectionString = "mongodb://localhost:27017/usersDB";
 mongoose.connect(dbConnectionString, { useNewUrlParser: true })
 
-const userSchema = {
+const userSchema = new mongoose.Schema({
     email: String,
     password: String
-}
+});
 
-const User = mongoose.model("USer", userSchema);
+const secret = "Thisisourlittlesceret.";
+userSchema.plugin(encrypt, { secret: secret, encryptedFields: ["password"] });
+
+
+const User = mongoose.model("User", userSchema);
 
 app.get("/", function (req, res) {
     res.render("home");
@@ -68,7 +73,6 @@ app.post("/login", function (req, res) {
                     console.log("Invalid password!!");
                 }
             }
-
         }
     })
 
