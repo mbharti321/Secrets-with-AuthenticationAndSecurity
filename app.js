@@ -66,6 +66,7 @@ app.get("/logout", function(req, res){
     res.redirect("/");
 })
 
+//register new user
 app.post("/register", function (req, res) {
     //  register function comes from passport-local-mongoose
     User.register({username:req.body.username}, req.body.password, function(err, user){
@@ -81,7 +82,7 @@ app.post("/register", function (req, res) {
     });
 });
 
-
+// login
 app.post("/login", function (req, res) {
     
     const user = new User({
