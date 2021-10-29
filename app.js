@@ -54,16 +54,50 @@ app.get("/login", function (req, res) {
 app.get("/register", function (req, res) {
     res.render("register");
 });
+app.get("/secrets", function(req,res){
+    if(req.isAuthenticated()){
+        res.render("secrets");
+    }else{
+        res.redirect("/login");
+    }
+});
+app.get("/logout", function(req, res){
+    req.logout();
+    res.redirect("/");
+})
 
 app.post("/register", function (req, res) {
-    
-
+    //  register function comes from passport-local-mongoose
+    User.register({username:req.body.username}, req.body.password, function(err, user){
+        if(err){
+            console.log(err);
+            res.redirect("/register");
+        }else{
+            // authenticate user using cookies
+            passport.authenticate("local")(req,res, function(){
+                res.redirect("/secrets");
+            });
+        }
+    });
 });
 
 
 app.post("/login", function (req, res) {
     
-
+    const user = new User({
+        username: req.body.username,
+        password: req.body.password
+    });
+    //login methods comes from passport
+    req.login(user, function(err){
+        if(err){
+            console.log(err);
+        }else{
+            passport.authenticate("local")(req,res, function(){
+                res.redirect("/secrets")
+            });
+        }
+    });
 });
 
 
