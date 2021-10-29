@@ -5,8 +5,11 @@ const express = require("express");
 const bodyParser = require("body-parser");
 const ejs = require("ejs");
 const mongoose = require("mongoose");
-const encrypt = require("mongoose-encryption");
-const md5 = require("md5");
+// const encrypt = require("mongoose-encryption");
+// const md5 = require("md5");
+const bcrypt = require("bcrypt");
+const saltRounds = 10;
+
 
 // reading data from .env file
 // console.log(process.env.API_KEY);
@@ -42,26 +45,27 @@ app.get("/register", function (req, res) {
 });
 
 app.post("/register", function (req, res) {
-    // console.log(req.body.username)
-    // console.log(req.body.password)
-    const newUser = new User({
-        email: req.body.username,
-        password: md5(req.body.password)
-    })
-    newUser.save(function (err) {
-        if (err) {
-            console.log(err);
-        } else {
-            console.log("Successfully registered!!");
-            res.render("secrets");
-        }
-    })
+    bcrypt.hash(req.body.password, saltRounds, function (err, hashedPassword) {
+        const newUser = new User({
+            email: req.body.username,
+            password: hashedPassword
+        });
+        newUser.save(function (err) {
+            if (err) {
+                console.log(err);
+            } else {
+                console.log("Successfully registered!!");
+                res.render("secrets");
+            }
+        });
+    });
+
 });
 
 
 app.post("/login", function (req, res) {
     const username = req.body.username;
-    const password = md5(req.body.password);
+    const password = req.body.password;
 
     User.findOne({ email: username }, function (err, foundUser) {
         if (err) {
@@ -70,12 +74,16 @@ app.post("/login", function (req, res) {
             if (!foundUser) {
                 console.log("Email not found!!");
             } else {
-                if (foundUser.password === password) {
-                    console.log("Login Successfull!!");
-                    res.render("secrets");
-                }else{
-                    console.log("Invalid password!!");
-                }
+                // Load hash from your password DB.
+                bcrypt.compare(password, foundUser.password, function (err, result) {
+                    if (result === true) {
+                        console.log("Login Successfull!!");
+                        res.render("secrets");
+                    } else {
+                        console.log("Invalid password!!");
+                    }
+                });
+                
             }
         }
     })
